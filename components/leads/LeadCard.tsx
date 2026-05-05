@@ -31,6 +31,8 @@ export default function LeadCard({
     ? formatDistanceToNow(new Date(lead.updatedAt), { addSuffix: true })
     : null;
 
+  // Safely format the phone number to prevent invalid URLs
+  const safePhone = String(lead.phone || "").replace(/[\s-()]/g, "");
 
   return (
     <>
@@ -106,7 +108,7 @@ export default function LeadCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              window.location.href = `tel:+91${lead.phone}`;
+              window.location.href = `tel:+91${safePhone}`;
               setModalOpen(true);
             }}
             className="flex-1 h-8 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center gap-1 text-slate-300 text-[10px]"
@@ -117,7 +119,7 @@ export default function LeadCard({
 
           {/* WHATSAPP */}
           <a
-            href={`https://wa.me/91${lead.phone}`}
+            href={`https://wa.me/91${safePhone}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
