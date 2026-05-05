@@ -30,11 +30,18 @@ export default function LeadCard({
 
   const lastContacted = lead.updatedAt ? formatDistanceToNow(new Date(lead.updatedAt), { addSuffix: true }) : null;
 
-  // Clean phone for WhatsApp: remove non-numeric
-  const cleanPhone = lead.phone.replace(/\D/g, "");
-  // If it doesn't start with a country code, you might want to add one. 
-  // Assuming Indian numbers if 10 digits without code.
-  const whatsappPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+  // Clean phone for dialing and WhatsApp
+  const numericPhone = lead.phone.replace(/\D/g, "");
+  
+  // Format for WhatsApp: must have country code, no '+', no leading '0'
+  let whatsappPhone = numericPhone;
+  if (numericPhone.startsWith("0") && numericPhone.length === 11) {
+    // Handle cases like 09876543210 -> 919876543210
+    whatsappPhone = `91${numericPhone.slice(1)}`;
+  } else if (numericPhone.length === 10) {
+    // Handle 10-digit Indian numbers -> 919876543210
+    whatsappPhone = `91${numericPhone}`;
+  }
 
   return (
     <>
@@ -101,7 +108,7 @@ export default function LeadCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              window.location.href = `tel:${lead.phone}`;
+              window.location.href = `tel:${numericPhone}`;
               setModalOpen(true);
             }}
             className="flex-1 h-8 bg-slate-800 hover:bg-slate-700 border border-slate-700/50 rounded-lg flex items-center justify-center gap-1.5 text-slate-300 text-[10px] font-bold transition-all"
