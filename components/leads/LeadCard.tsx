@@ -13,7 +13,6 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import UpdateStatusModal from "@/components/leads/UpdateStatusModal";
 import { formatDistanceToNow } from "date-fns";
 import type { Lead, UpdateLeadPayload } from "@/types";
-import { cn } from "@/utils";
 
 interface LeadCardProps {
   lead: Lead;
@@ -28,20 +27,35 @@ export default function LeadCard({
 }: LeadCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
-  const lastContacted = lead.updatedAt ? formatDistanceToNow(new Date(lead.updatedAt), { addSuffix: true }) : null;
+  const lastContacted = lead.updatedAt
+    ? formatDistanceToNow(new Date(lead.updatedAt), { addSuffix: true })
+    : null;
 
-  // Clean phone for dialing and WhatsApp
-  const numericPhone = lead.phone.replace(/\D/g, "");
-  const dialPhone = `+91${numericPhone}`;
-  const whatsappPhone = `91${numericPhone}`;
+  // ✅ FIXED PHONE LOGIC
+  const rawPhone = lead.phone?.replace(/\D/g, "") || "";
+
+  let cleanedPhone = rawPhone;
+
+  // Remove +91 or 91 if already present
+  if (rawPhone.startsWith("91") && rawPhone.length > 10) {
+    cleanedPhone = rawPhone.slice(2);
+  }
+
+  // Ensure last 10 digits only
+  if (cleanedPhone.length > 10) {
+    cleanedPhone = cleanedPhone.slice(-10);
+  }
+
+  const dialPhone = `+91${cleanedPhone}`;
+  const whatsappPhone = `91${cleanedPhone}`;
 
   return (
     <>
       <div className="bg-[#0f172a] border border-slate-800/40 rounded-xl p-3 shadow-lg hover:border-blue-500/30 transition-all duration-300 group relative overflow-hidden mb-3">
-        {/* Subtle Background Glow */}
+        {/* Background Glow */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-2xl -mr-12 -mt-12 pointer-events-none" />
-        
-        {/* Header Row */}
+
+        {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700/50">
@@ -72,21 +86,25 @@ export default function LeadCard({
           <StatusBadge status={lead.status} size="sm" />
         </div>
 
-        {/* Mid Row: Info */}
+        {/* Info */}
         <div className="flex items-center gap-3 mb-3 px-0.5">
           <div className="flex items-center gap-1">
             <Phone size={10} className="text-slate-500" />
-            <span className="text-[10px] text-slate-400 font-medium">{lead.phone}</span>
+            <span className="text-[10px] text-slate-400 font-medium">
+              {lead.phone}
+            </span>
           </div>
           {lastContacted && (
             <div className="flex items-center gap-1 ml-auto">
               <div className="w-1 h-1 rounded-full bg-blue-500/40" />
-              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{lastContacted}</span>
+              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                {lastContacted}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Note Preview (Optional) */}
+        {/* Notes */}
         {(lead.followUpNote || lead.notes) && (
           <div className="mb-3 py-1.5 px-2.5 rounded-lg bg-slate-800/30 border border-slate-700/20">
             <p className="text-[9px] text-slate-500 leading-tight line-clamp-1 italic">
@@ -95,8 +113,9 @@ export default function LeadCard({
           </div>
         )}
 
-        {/* Actions Bar */}
+        {/* Actions */}
         <div className="flex gap-2">
+          {/* CALL */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -108,6 +127,8 @@ export default function LeadCard({
             <Phone size={11} />
             Call
           </button>
+
+          {/* WHATSAPP */}
           <a
             href={`https://wa.me/${whatsappPhone}`}
             target="_blank"
@@ -118,6 +139,8 @@ export default function LeadCard({
             <MessageCircle size={11} />
             WhatsApp
           </a>
+
+          {/* UPDATE */}
           <button
             onClick={() => setModalOpen(true)}
             className="flex-[1.2] h-8 bg-blue-600 hover:bg-blue-500 rounded-lg flex items-center justify-center gap-1 text-white text-[10px] font-black transition-all shadow-lg shadow-blue-900/20"
